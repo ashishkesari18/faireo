@@ -1,6 +1,8 @@
 # Methods, validity boundaries, and intended interpretation
 
-> Review draft, 2026-11-07. This document describes the publicly visible implementation and points requiring verification. It does not claim that new experiments have been run.
+> Methods note (updated 2026-11-07). Arithmetic checks of 66 saved country
+> rows and an exploratory 31-country sensitivity analysis were executed.
+> Neither is an independent reproduction of model training.
 
 ## Unit of observation versus unit of inference
 
@@ -36,7 +38,7 @@ This analysis reuses stored per-country outputs. It **does not independently rep
 
 **Geo-Wiki and WorldCover:** Label definitions, years, resolution, and sampling protocols differ. A subset with a common labeling protocol is an informative sensitivity analysis but cannot rule out labeling noise, spatial bias, or domain mismatch. WorldCover is not independent ground truth for all crop definitions.
 
-**Trust score:** Distinguish predictor information available at deployment (unlabeled features) from information learned from the held-out country or from its labels. Audit nested cross-validation of score fitting, feature selection, tuning, and neighborhood selection. A leave-one-country-out score fit is not sufficient if the upstream model, hyperparameters, or similarity descriptors have seen the evaluation outcomes.
+**Trust score:** Distinguish predictor information available at deployment (unlabeled features) from information learned from the held-out country or from its labels. Audit nested cross-validation of score fitting, feature selection, tuning, and neighborhood selection. A leave-one-country-out score fit is not sufficient if the upstream model, hyperparameters, or similarity descriptors have seen the evaluation outcomes. The map must show `expected_auc_loo` for measured countries; `expected_auc` is fitted with all measured-country outcomes and is only appropriate for sparse countries excluded from that fit. The constant-mean comparison baseline must likewise exclude the evaluated country.
 
 ## Language to use until validation is stronger
 

@@ -1,6 +1,6 @@
 # FairEO-Bench research log
 
-> **Status: review draft, prepared 2026-11-07 with AI assistance.** This document is a plan and a desk-based code review. It is **not** a record of experiments personally run by the repository owner. Add entries only after work actually happens.
+> **Status: ongoing research record (updated 2026-11-07).** Entries distinguish desk-based reviews, locally executed data checks, and experiments that remain planned. Model-training reproduction is still pending.
 
 ## Research question
 
@@ -25,9 +25,11 @@ When a cropland classification model is evaluated on countries whose samples wer
 
 **Change proposed:** add a standalone country-level sensitivity analysis that reuses saved metrics and explicitly reports both raw and linear prevalence-adjusted AUC gaps. This is a diagnostic only, not a causal estimate.
 
-**Execution status:** four synthetic review-pack unit tests executed and passed in a separate environment. The real FairEO pipeline and its stored CSVs have **not** been run or validated here.
+**Execution status at this desk-review stage:** four synthetic review-pack
+unit tests had passed. The complete model-training pipeline was not
+reproduced. Later saved-CSV checks are recorded below.
 
-## Next experiment entry (fill in after actual execution)
+## Template for future experiment entries
 
 - Date and operator:
 - Git commit SHA and branch:
@@ -39,7 +41,6 @@ When a cropland classification model is evaluated on countries whose samples wer
 - Difference from existing reported results:
 - Interpretation / alternative explanations:
 - Unexpected failures or negative results:
-- AI assistance used, if any:
 - What was verified by the researcher:
 - Next test:
 
@@ -91,6 +92,16 @@ country eligibility thresholds, and other
 sampling-composition variables.
 
 Documentation note:
-This entry summarizes script-generated findings
-with AI writing assistance. Interpretation and
-research decisions require researcher review.
+These results were computed from stored per-country
+CSV outputs rather than independent model retraining.
+Scientific interpretation and further verification remain open.
+
+## 2026-11-07 — Public claim and map-display audit
+
+- Revised unsupported national-area and causal interpretations in public text.
+- Identified and corrected use of the evaluated country's observed AUC
+  in the original constant-mean trust-score baseline.
+- Updated public trust-map generation to display the saved leave-one-country-out
+  estimate for measured countries, instead of predictions from the
+  trust model fitted on all measured-country outcomes.
+- External geographic validation and end-to-end model reproduction remain open.

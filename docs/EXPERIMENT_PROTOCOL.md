@@ -1,6 +1,6 @@
 # Experiment protocol for review
 
-**Prepared:** 2026-11-07. **Status:** pre-execution plan; no claim that these experiments have been run on FairEO data.
+**Prepared:** 2026-11-07. **Status:** E0 and E1 ran on stored FairEO CSVs on 2026-11-07. E2–E4 are planned, not independently executed. The full model-training pipeline remains unverified.
 
 ## E0 — Basic structural consistency checks
 
@@ -29,6 +29,12 @@ python scripts/sensitivity_gap.py \
 
 **Interpretation rule:** If adjusted and raw gaps differ materially, investigate prevalence confounding. If prevalence overlap is weak, do not present the adjusted coefficient as robust. In any outcome, do not make causal claims. Register further sensitivity checks before trying them.
 
+**Observed E0/E1 results:** 66 country rows passed arithmetic consistency
+checks. E1 retained 31 eligible countries (10 high-income, 21 low-income).
+The raw gap was 0.07964 (95% bootstrap CI 0.00893–0.14771); the linear
+prevalence-adjusted estimate was 0.05063 (CI −0.09823–0.15473).
+The saved output is `results/validation/gap_sensitivity_lgbm_country_s0.json`.
+
 ## E2 — Rerun predictions with a different split seed (owner-run)
 
 **Question:** Are conclusions dominated by one country-fold assignment?
@@ -53,8 +59,8 @@ Collect true georeferenced image chips for Prithvi rather than pixel replication
 - [ ] Save `git rev-parse HEAD` and branch
 - [ ] Save Python version and `pip freeze`
 - [ ] Save SHA256 digests for input tables and downloaded weights
-- [ ] Run original core tests and reviewer-added synthetic tests
-- [ ] Run E0 and E1 on actual repository CSVs
+- [x] Run original core tests and reviewer-added synthetic tests
+- [x] Run E0 and E1 on actual repository CSVs
 - [ ] Verify baseline runs from the actual data, not only saved country summaries
-- [ ] Add the generated outputs and observed findings to the dated research log
+- [x] Add the generated outputs and observed findings to the dated research log
 - [ ] Review wording and figures before publicizing new claims

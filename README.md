@@ -58,7 +58,7 @@ model finds 56% of crop points (high-income: 91%). Its predicted crop prevalence
 out 6.6 percentage points too low in low-income countries and 9.8 points too
 high in high-income ones (Presto: −8.3 and +6.3).
 
-![Cropland under-count](docs/figures/03_cropland_undercount.png)
+![Sampled-point crop-prevalence difference](docs/figures/03_cropland_undercount.png)
 
 **4. A widely used global map shows the same pattern on uniform labels.**
 ESA WorldCover 2020/2021, read at all 87,464 points, agrees poorly with
@@ -74,17 +74,18 @@ of crop points in low-income countries against 34% in high-income ones.
 
 Regressing per-country AUC (trees, 66 countries) on candidate correlates:
 
-- **Crop share** is the strongest single predictor (Spearman ρ = +0.46):
-  countries where cropland is a small, scattered part of the landscape are
-  harder. Low-income countries in this data have lower crop shares (0.47 vs 0.74).
+- **Sampled crop prevalence** has the strongest reported bivariate association
+  among the tested variables (Spearman ρ = +0.46). Countries with fewer
+  crop-labeled observations tended to have lower benchmark AUC. This is
+  sample composition, not a national land-area estimate.
 - **Distance to the nearest labelled point in another country** matters once
   the other factors are held fixed (−0.045 AUC per standard deviation, p = 0.02).
 - **Income on its own** is a weaker predictor (low-income vs the rest: −0.055
   AUC, p = 0.08), and its effect shrinks further (−0.037, p = 0.39) once crop
-  share and distance are in the model. The gap is real, but it runs through landscape and data
-  coverage. Income is not a cause in its own right.
-- **Label source** (share of Geo-Wiki labels) and the number of points do not
-  explain it.
+  share and distance are in the model. These are conditional associations,
+  not evidence that specific variables mediate or cause the group gap.
+- **Label source** (Geo-Wiki fraction) and sample count were not strong
+  predictors in this regression; other labeling differences may remain.
 
 With 66 countries these are associations, not causal estimates. Field size
 (smallholder plots) is the obvious next variable to add.
@@ -95,14 +96,16 @@ With 66 countries these are associations, not causal estimates. Field size
 
 For each country, the trust score combines the model's own confidence on that
 country's (unlabelled) imagery with the measured accuracy of the five
-countries whose landscapes look most similar in Presto's embedding space. Validated
-leave-one-country-out on the 66 measured countries:
+countries whose landscapes look most similar in Presto's embedding space. Internally evaluated with leave-one-country-out validation on 66 measured
+benchmark countries; independent deployment validation remains open:
 
 - Spearman ρ = **0.72** between trust score and measured AUC (Presto + trees: 0.64)
-- mean absolute error 0.061 AUC, against 0.085 for a constant guess
+- mean absolute error 0.061 AUC, against approximately 0.086 for a
+  country-mean baseline that excludes each evaluated country
 
-It also gives a score for 59 more countries that have too few labels to measure
-at all. Similar landscapes predict failure better than nearby countries do:
+It also produces exploratory estimates for 59 additional countries with too
+few labels to meet the country-AUC eligibility threshold. These estimates
+are not independently validated deployment guarantees. Similar landscapes predict failure better than nearby countries do:
 with the 8 nearest neighbours, landscape neighbours reach ρ = 0.39 against 0.24 for geographic neighbours.
 
 ![Trust validation](docs/figures/04_trust_validation.png)
@@ -150,13 +153,14 @@ All evaluated on countries held out of training.
 | Retrain with 25–400 local labels | Yes | See label-budget section |
 
 The negative results are part of the finding. These experiments do not
-identify the causal mechanism behind the observed gap. Small amounts of the right
-local data do, and the label-budget results show that spreading new labels
-evenly beats putting them where labels already exist.
+identify a causal mechanism for the observed group gap. In this benchmark,
+some tested local-label strategies help; a simulated allocation experiment
+favors spreading new labels evenly under its stated assumptions.
 
 ## Reproduce
 
-Everything runs on a laptop CPU. No GPU, no paid API.
+The scripts are designed for laptop CPU execution without paid APIs.
+An independent end-to-end reproduction is still needed.
 
 ```bash
 git clone https://github.com/ashishkesari18/faireo && cd faireo
@@ -182,10 +186,10 @@ python tests/test_core.py  # fast checks, no data needed
 
 ## Research process and validation
 
-- [Research log (draft and real-run template)](docs/RESEARCH_LOG.md)
+- [Research log: executed checks and open work](docs/RESEARCH_LOG.md)
 - [Methods and validity boundaries](docs/METHODS_AND_LIMITATIONS.md)
-- [Reproducible sensitivity-experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
-- [Authorship and AI-use disclosure draft](docs/AUTHORSHIP_AND_AI_USE.md)
+- [Sensitivity-experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
+- [Saved sensitivity results](results/validation/gap_sensitivity_lgbm_country_s0.json)
 
 The legacy `area_err_pp` metric in exported CSVs is **sampled-point crop
 prevalence error**, computed as `100 * (pred_prevalence - prevalence)`. The
