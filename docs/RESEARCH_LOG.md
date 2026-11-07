@@ -105,3 +105,17 @@ Scientific interpretation and further verification remain open.
   estimate for measured countries, instead of predictions from the
   trust model fitted on all measured-country outcomes.
 - External geographic validation and end-to-end model reproduction remain open.
+
+## 2026-11-07 — Geographic stress test: post-merge correctness audit
+
+- Draft PR #3 added the continent-held-out country-level calibrator experiment.
+- The first successful GitHub run included invalid three-feature results
+  (LightGBM MAE 0.360249; Presto + LightGBM MAE 0.341283) because the
+  confidence-only output overwrote the `confidence` test feature used by
+  the subsequent three-feature model.
+- This is a code bug, not evidence of a true model performance collapse.
+  These specific first-run three-feature metrics must **not** be cited.
+- A follow-up correction uses noncolliding prediction names, adds direct
+  model-equivalence regression tests, and requires a fresh CI rerun before
+  the experiment is interpreted. Results are exploratory and do not
+  independently validate upstream classifier training.
