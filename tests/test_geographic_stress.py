@@ -6,8 +6,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
 import pandas as pd
 from scripts.geographic_stress_test import (
-    load_countries, predict_heldout_continents, cluster_paired_ci, summarize
+    FEATURE_SETS, load_countries, predict_heldout_continents,
+    cluster_paired_ci, summarize
 )
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
 
 
 def toy():
@@ -41,10 +44,34 @@ def test_no_target_continent_outcome_used():
     a = predict_heldout_continents(d)
     d.loc[d.continent == "Africa", "auc"] += .15
     b = predict_heldout_continents(d)
-    for col in ("mean_baseline", "confidence", "three_feature"):
+    for col in ("mean_baseline", "confidence_only", "three_feature"):
         original = a.loc[a.continent == "Africa", col].to_numpy()
         edited = b.loc[b.continent == "Africa", col].to_numpy()
         assert np.allclose(original, edited), col
+
+
+def test_input_features_are_not_overwritten_by_predictions():
+    d = toy()
+    p = predict_heldout_continents(d)
+    expected = d.set_index("country")["confidence"].reindex(p.country).to_numpy()
+    assert np.allclose(p.confidence, expected)
+    assert "confidence_only" in p.columns
+    assert "confidence" not in FEATURE_SETS
+
+
+def test_three_feature_predictions_use_original_confidence():
+    d = toy()
+    p = predict_heldout_continents(d)
+    train = d[d.continent != "Europe"]
+    test = d[d.continent == "Europe"].sort_values("country")
+    scaler = StandardScaler().fit(train[FEATURE_SETS["three_feature"]])
+    model = Ridge(alpha=10.0).fit(
+        scaler.transform(train[FEATURE_SETS["three_feature"]]),
+        train.auc.to_numpy(dtype=float)
+    )
+    expected = model.predict(scaler.transform(test[FEATURE_SETS["three_feature"]]))
+    actual = p[p.continent == "Europe"].sort_values("country").three_feature.to_numpy()
+    assert np.allclose(actual, expected)
 
 
 def test_cluster_bootstrap_deterministic():

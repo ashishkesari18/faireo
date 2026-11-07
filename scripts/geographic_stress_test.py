@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ("lgbm_country_s0", "presto_lgbm_country_s0")
 FEATURE_SETS = {
-    "confidence": ["confidence"],
+    "confidence_only": ["confidence"],
     "three_feature": ["confidence", "spread", "pred_crop_share"],
 }
 ALPHA = 10.0
@@ -66,7 +66,12 @@ def load_countries(country_csv, trust_csv):
 
 
 def predict_heldout_continents(d, alpha=ALPHA):
-    """Standardize and fit entirely within the training continents."""
+    """Standardize and fit entirely within the training continents.
+
+    Prediction names must be different from raw input-feature names:
+    overwriting the 'confidence' feature on the test frame changes the
+    subsequent three-feature prediction without any warning.
+    """
     if alpha <= 0:
         raise ValueError("Ridge alpha must be positive")
     output = []
@@ -77,6 +82,8 @@ def predict_heldout_continents(d, alpha=ALPHA):
             raise ValueError("Too few training countries in held-out split")
         test["mean_baseline"] = float(train.auc.mean())
         for name, features in FEATURE_SETS.items():
+            if name in d.columns:
+                raise ValueError(f"Prediction name shadows a raw input feature: {name}")
             scaler = StandardScaler()
             Xtr = scaler.fit_transform(train[features].to_numpy(dtype=float))
             Xte = scaler.transform(test[features].to_numpy(dtype=float))
@@ -138,7 +145,7 @@ def cluster_paired_ci(pred, candidate, B=4000, seed=SEED):
 def summarize(pred, B=4000, seed=SEED):
     baseline_mae = mae(pred.auc, pred.mean_baseline)
     methods = {}
-    for name in ("mean_baseline", "confidence", "three_feature"):
+    for name in ("mean_baseline", "confidence_only", "three_feature"):
         result = score(pred.auc, pred[name])
         if name != "mean_baseline":
             result["mae_improvement_over_baseline"] = round(
@@ -198,7 +205,7 @@ def run(root=ROOT, B=4000, seed=SEED):
         }
         p["run"] = run_name
         frames.append(p[["run", "country", "continent", "income", "auc",
-                         "mean_baseline", "confidence", "three_feature",
+                         "mean_baseline", "confidence_only", "three_feature",
                          "expected_auc_loo"]].rename(
                              columns={"auc": "observed_auc",
                                       "expected_auc_loo": "published_loo_reference"}))

@@ -92,3 +92,20 @@ uploads both generated files.
 
 Only then evaluate whether the method is ready to support deployment
 decisions.
+
+## Implementation correction after initial merge (2026-11-07)
+
+The initial PR #3 script accidentally wrote the confidence-only model's
+**prediction** into a column named `confidence` in the held-out test table.
+The subsequent three-feature model then used that predicted value instead of
+the original unlabeled confidence feature. The first GitHub Actions run
+therefore reported invalid three-feature MAEs (0.360249 for LightGBM and
+0.341283 for Presto + LightGBM), even though the workflow completed.
+**Do not cite those first-run three-feature metrics as research results.**
+
+The repair names the first output `confidence_only`, retains raw
+`confidence` unchanged, and adds regression tests to prevent future
+feature/prediction-name collisions. Rerun all results with the fixed script.
+The originally reported preliminary three-feature MAEs (approximately
+0.0639 and 0.0677) are not considered verified until they match a fresh
+post-correction GitHub workflow output.
