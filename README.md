@@ -1,22 +1,24 @@
-# FairEO-Bench: evaluating geographic transfer in cropland classification
+# FairEO-Bench
 
-FairEO-Bench studies whether cropland classification models generalize to countries
-excluded from classifier training. Its published experiments report country-level
-performance differences across income-group categories on **labeled sample points**.
-These are observational benchmark results, not evidence that national income causes
-model failures or that national cropland area has been estimated accurately.
+**How well do cropland classifiers work in countries they have never seen?**
 
-This repository includes country-held-out model comparisons and exploratory tools:
+FairEO-Bench evaluates satellite-based crop classification with entire countries
+held out of classifier training. The results cover 66 eligible countries in
+NASA Harvest's CropHarvest benchmark, along with exploratory work on predicting
+country-level reliability and allocating additional labels.
 
-1. A **trust score** associated with held-out benchmark-country AUC, proposed for
-   use without labels from a target country; independent validation is still needed.
-2. A **sampled-point crop-prevalence error** report, not a national area estimate.
-3. A **label-budget simulation** comparing alternative allocations of new labels.
+The measurements describe **labeled sample points**, not national cropland area.
+Observed differences between income groups do not establish causality.
 
-[**Interactive trust map**](https://ashishkesari18.github.io/faireo/docs/trustmap/) ·
-[Technical write-up](docs/ARTICLE.md) · [How to reproduce](#reproduce)
+[Explore the interactive map](https://ashishkesari18.github.io/faireo/docs/trustmap/) ·
+[Read the technical note](docs/ARTICLE.md) ·
+[Reproduce the experiments](#reproduce)
 
-![Gap by income group](docs/figures/01_gap_by_income.png)
+## Explore the map
+
+[![Static FairEO-Bench world map preview showing country-held-out AUC for gradient-boosted trees and an example country summary for Kenya](docs/figures/trustmap-preview.svg)](https://ashishkesari18.github.io/faireo/docs/trustmap/)
+
+*Static preview of the measured-AUC view. [Open the live map](https://ashishkesari18.github.io/faireo/docs/trustmap/) to switch models, inspect country results, and compare reliability estimates with sampled-point crop-prevalence errors.*
 
 ---
 
@@ -43,6 +45,8 @@ over countries.
 sees a 16×16 patch filled with that pixel over four seasons (no spatial
 texture). This is a pixel adaptation, reported separately for that reason.
 
+![Country-level AUC gap by income group](docs/figures/01_gap_by_income.png)
+
 **1. The gap changes under country holdout.** When each country's own points are also
 in training (random split), the high/low gap for trees falls from 0.080 to
 0.039 and its interval includes zero. Low-income countries lose 0.084 AUC from
@@ -68,7 +72,7 @@ or shrubland). On Geo-Wiki labels alone, its balanced accuracy is 0.07 lower
 in low-income than in high-income countries (0.02 to 0.12), and it finds 24%
 of crop points in low-income countries against 34% in high-income ones.
 
-![World map](docs/figures/02_world_map_auc.png)
+[Full-resolution country AUC figure](docs/figures/02_world_map_auc.png)
 
 ## Observed associations with model performance
 
@@ -186,6 +190,7 @@ python tests/test_core.py  # fast checks, no data needed
 
 ## Research process and validation
 
+- [Continent-held-out reliability stress test (exploratory)](docs/GEOGRAPHIC_STRESS_TEST.md)
 - [Research log: executed checks and open work](docs/RESEARCH_LOG.md)
 - [Methods and validity boundaries](docs/METHODS_AND_LIMITATIONS.md)
 - [Sensitivity-experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
@@ -195,9 +200,11 @@ The legacy `area_err_pp` metric in exported CSVs is **sampled-point crop
 prevalence error**, computed as `100 * (pred_prevalence - prevalence)`. The
 name is retained for compatibility, but it is not an area-weighted estimate.
 Run `python tests/test_review_pack.py` to test the new analysis functions.
-Run `python scripts/verify_country_results.py` for CSV arithmetic consistency
-and `python scripts/sensitivity_gap.py` for a country-level sensitivity check.
-Neither check by itself reproduces training or proves a causal mechanism.
+Run `python scripts/verify_country_results.py` for CSV arithmetic consistency,
+`python scripts/sensitivity_gap.py` for country-level sensitivity, and
+`python scripts/geographic_stress_test.py` for the continent-blocked
+country-level reliability analysis. These checks are not an independent
+end-to-end reconstruction of the satellite model training pipeline.
 
 ## Limitations
 
