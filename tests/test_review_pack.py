@@ -1,5 +1,7 @@
 """Synthetic tests for the reviewer-added country-level analysis (no data download)."""
 import sys
+import csv
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -7,6 +9,7 @@ import numpy as np
 import pandas as pd
 from scripts.sensitivity_gap import prepare, raw_gap, prevalence_adjusted_gap, analyze
 from scripts.verify_country_results import verify
+from faireo.baselines import heldout_country_mean
 
 
 def fake_countries():
@@ -43,6 +46,37 @@ def test_country_table_invariants():
     assert verify(d) == []
     d.loc[0, "area_err_pp"] = 11
     assert verify(d)
+
+
+def test_heldout_country_mean_cannot_see_target():
+    observed = np.array([0.1, 0.2, 0.8])
+    baseline = heldout_country_mean(observed)
+    assert np.allclose(baseline, [0.5, 0.45, 0.15])
+    # Changing the target outcome cannot change its reference estimate.
+    changed = heldout_country_mean([0.99, 0.2, 0.8])
+    assert np.isclose(baseline[0], changed[0])
+
+
+def test_public_map_uses_heldout_predictions():
+    """Measured-country map estimates must come from target-excluded scores."""
+    root = Path(__file__).resolve().parents[1]
+    js = (root / "docs/trustmap/data.js").read_text()
+    prefix = "window.FAIREO="
+    assert js.startswith(prefix)
+    payload = json.loads(js[len(prefix):].strip().rstrip(";"))
+    runs = {"trees": "lgbm_country_s0",
+            "presto": "presto_lgbm_country_s0"}
+    for display_run, file_run in runs.items():
+        with (root / f"results/trust_{file_run}.csv").open(newline="") as f:
+            scores = {r["country"]: r for r in csv.DictReader(f)}
+        measured_count = 0
+        for country, entry in payload["runs"][display_run].items():
+            if entry.get("auc") is None:
+                continue
+            measured_count += 1
+            expected = float(scores[country]["expected_auc_loo"])
+            assert abs(entry["exp"] - expected) <= .00051, country
+        assert measured_count >= 60
 
 
 def test_does_not_infer_unsupported_population_area():

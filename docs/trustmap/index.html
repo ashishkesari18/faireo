@@ -69,8 +69,8 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
 <div class="wrap">
   <header>
     <div class="eyebrow">FairEO-Bench · cropland AI reliability</div>
-    <h1>Where can you trust a satellite cropland model?</h1>
-    <p class="lede">Each country was held out of training, then scored against ground labels from NASA Harvest's CropHarvest. The trust score estimates accuracy using no labels from that country, so it also covers countries with too few labels to measure.</p>
+    <h1>How does cropland model performance vary by country?</h1>
+    <p class="lede">Each country was held out of training, then scored against ground labels from NASA Harvest's CropHarvest. The trust estimate uses unlabeled target-country features and outcomes from other benchmark countries. Measured countries display leave-one-country-out scores; sparse-country estimates have not been independently validated.</p>
   </header>
 
   <div class="controls">
@@ -78,7 +78,7 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
       <span class="seg" role="group" aria-label="Map layer">
         <button id="l-auc" aria-pressed="true" data-layer="auc">Measured accuracy</button>
         <button id="l-exp" aria-pressed="false" data-layer="exp">Trust score</button>
-        <button id="l-share" aria-pressed="false" data-layer="share">Cropland count error</button>
+        <button id="l-share" aria-pressed="false" data-layer="share">Sample crop-prevalence error</button>
       </span></div>
     <div><span class="ctl-label">Model</span>
       <span class="seg" role="group" aria-label="Model">
@@ -99,12 +99,12 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
 
   <div class="tablebox">
     <h3 id="tbl-title">Least reliable countries</h3>
-    <table><thead><tr><th>Country</th><th>Income</th><th class="num">Measured AUC (95% CI)</th><th class="num">Trust score</th><th class="num">Crop found</th><th class="num">Cropland share, true vs model</th></tr></thead>
+    <table><thead><tr><th>Country</th><th>Income</th><th class="num">Measured AUC (95% CI)</th><th class="num">Trust estimate (LOO)</th><th class="num">Crop recall</th><th class="num">Sample crop %, observed vs predicted</th></tr></thead>
     <tbody id="tbody"></tbody></table>
   </div>
 
   <div class="notes">
-    <p>AUC: how well the model ranks crop above non-crop (0.5 = chance, 1 = perfect). Measured only where a country has at least 100 labelled points with 20 of each class (66 countries). Trust score: a leave-one-country-out model of expected AUC built from the model's own confidence and the measured accuracy in the five countries whose landscapes look most similar (Presto embeddings). Cropland count error: model's crop share minus the true share among labelled points, in percentage points; negative means farmland is missed.</p>
+    <p>AUC: how well the model ranks crop above non-crop (0.5 = chance, 1 = perfect). Measured only where a country has at least 100 labelled points with 20 of each class (66 countries). Trust score: internal leave-one-country-out prediction of benchmark AUC using model confidence and AUC in similar countries (Presto embeddings), not a deployment guarantee. Sample crop-prevalence error: predicted-positive fraction minus observed crop fraction among labeled points (percentage points); not national cropland-area error.</p>
     <p>Data: CropHarvest v0.7 (Tseng et al., 2021), Sentinel-1/2, ERA5, SRTM. Borders: Natural Earth. Income groups: World Bank classification as recorded in Natural Earth.</p>
   </div>
 </div>
@@ -127,7 +127,7 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
     const t = Math.max(0, Math.min(1, (v - 0.5) / 0.45));
     return d3.interpolateRgbBasis(stops)(t);
   }
-  function divColor(v) {      // blue = over-count, red = under-count
+  function divColor(v) {      // blue = higher predicted-positive fraction; red = lower
     const t = Math.max(-1, Math.min(1, v / 40));
     return t < 0 ? d3.interpolateRgb(css("--div-mid"), css("--div-neg"))(-t) : d3.interpolateRgb(css("--div-mid"), css("--div-pos"))(t);
   }
@@ -149,7 +149,7 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
   function legend() {
     const L = document.getElementById("legend");
     if (layer === "share") {
-      L.innerHTML = `<span>misses farmland −40</span><span class="ramp" style="background:linear-gradient(90deg,${css("--div-neg")},${css("--div-mid")},${css("--div-pos")})"></span><span>+40 over-counts</span><span><span class="swatch"></span> no measurement</span>`;
+      L.innerHTML = `<span>−40 pp (predicted − observed)</span><span class="ramp" style="background:linear-gradient(90deg,${css("--div-neg")},${css("--div-mid")},${css("--div-pos")})"></span><span>+40 pp</span><span><span class="swatch"></span> no measurement</span>`;
     } else {
       const st = ["--s7", "--s6", "--s5", "--s4", "--s3", "--s2", "--s1"].map(css).join(",");
       L.innerHTML = `<span>AUC 0.50 (chance)</span><span class="ramp" style="background:linear-gradient(90deg,${st})"></span><span>0.95</span><span><span class="swatch"></span> ${layer === "exp" ? "under 20 points" : "too few labels to measure"}</span>`;
@@ -173,16 +173,16 @@ tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
     if (!r) { P.innerHTML = `<h2>${selected}</h2><div class="hint">Fewer than 20 labelled points, so no score.</div>`; return; }
     const measured = r.auc != null;
     const ref = measured ? r.auc : r.exp;
-    const verdict = ref >= 0.85 ? "Reliable: the model separates crop from non-crop well here." :
-                    ref >= 0.72 ? "Use with care: expect noticeable errors, and check a sample on the ground." :
-                    "Not reliable: local labels are needed before using this model here.";
+    const verdict = measured
+      ? "Measured using held-out benchmark points. This does not establish performance for new seasons, sensors, or sampling protocols."
+      : "Exploratory trust estimate only. Collect independent local labels before operational decisions.";
     P.innerHTML = `<h2>${selected}</h2><span class="pill">${f ? f.properties.income || "income n/a" : ""} income</span>
       <dl>${measured ? `<dt>Measured AUC</dt><dd>${fmt(r.auc)}</dd><dt>95% interval</dt><dd>${fmt(r.lo)}–${fmt(r.hi)}</dd>` : ""}
-      <dt>Trust score (no local labels)</dt><dd>${fmt(r.exp)}</dd>
-      ${measured ? `<dt>Crop points found</dt><dd>${Math.round(100 * r.rec)}%</dd><dt>True cropland share</dt><dd>${r.share}%</dd><dt>Model's cropland share</dt><dd>${r.pshare}%</dd>` : ""}
+      <dt>Trust estimate (no target labels used for this score)</dt><dd>${fmt(r.exp)}</dd>
+      ${measured ? `<dt>Crop points found</dt><dd>${Math.round(100 * r.rec)}%</dd><dt>Observed crop % (sample)</dt><dd>${r.share}%</dd><dt>Predicted crop % (sample)</dt><dd>${r.pshare}%</dd>` : ""}
       <dt>Labelled points</dt><dd>${r.n.toLocaleString()}</dd></dl>
       <div class="verdict">${verdict}</div>
-      ${measured ? "" : `<div class="hint">Too few labels to measure accuracy directly; the trust score is the estimate.</div>`}`;
+      ${measured ? "" : `<div class="hint">Below the benchmark AUC sample threshold. The trust estimate is not independently validated.</div>`}`;
   }
   paths.on("mousemove", (e, f) => {
     const r = D.runs[model][f.properties.name], v = val(r);
