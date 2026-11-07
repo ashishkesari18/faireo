@@ -13,9 +13,9 @@ it ships three tools people can act on:
 1. a **trust score** that predicts how reliable a model will be in a country
    using *no* labels from that country,
 2. a **cropland-area error** report per country, and
-3. a **label-budget planner** that shows where new ground labels would help most.
+3. a **label-budget planner** that compares ways of spending new ground labels.
 
-[**Interactive trust map**](docs/trustmap/index.html) ·
+[**Interactive trust map**](https://ashishkesari18.github.io/faireo/docs/trustmap/) ·
 [Technical write-up](docs/ARTICLE.md) · [How to reproduce](#reproduce)
 
 ![Gap by income group](docs/figures/01_gap_by_income.png)
@@ -113,7 +113,7 @@ with the 8 nearest neighbours, landscape neighbours reach ρ = 0.39 against 0.24
 
 `results/countries_*.csv` lists, per country, the true and predicted crop
 share, recall, calibration error and AUC with intervals. The
-[trust map](docs/trustmap/index.html) has a layer for it.
+[trust map](https://ashishkesari18.github.io/faireo/docs/trustmap/) has a layer for it.
 
 ### Where to collect the next labels
 
@@ -121,8 +121,23 @@ share, recall, calibration error and AUC with intervals. The
 grows when 25, 100 or 400 of its own labels are added to training. It then
 splits a fixed budget of new labels across countries under four policies:
 more labels where many already exist (the status quo), the same number
-everywhere, guided by the trust score (label-free), and an oracle upper bound.
-Results are being finalised and will appear here.
+everywhere, guided by how unfamiliar each country looks to the model
+(label-free), and an oracle upper bound. (Presto + linear probe, 30k-point
+training subsample, 3 repeats.)
+
+- **Local labels help, most where the model is weakest.** Averaged over
+  countries, retraining with 25, 100 and 400 of a country's own labels raises
+  its AUC by 0.010, 0.022 and 0.045. With 400 labels, low-income countries gain
+  0.056 against 0.023 for high-income ones.
+- **Spreading labels evenly beats the status quo.** With 10,000 new labels,
+  status-quo allocation lifts mean AUC from 0.752 to 0.772; the same number
+  spread evenly reaches 0.776 and does more for the worst 10% of countries (0.557 vs 0.550).
+- **The label-free guide does not beat "spread evenly" yet** (0.771). The
+  oracle shows the headroom: 0.781 overall and 0.761 in low-income countries
+  (status quo 0.751). Closing that gap with a better label-free targeting rule
+  is open work.
+
+![Label budget](docs/figures/05_label_budget.png)
 
 ## Fixes tested
 
@@ -138,7 +153,8 @@ All evaluated on countries held out of training.
 
 The negative results are part of the finding. Post-hoc fixes that use no labels
 do not close a gap that comes from missing data. Small amounts of the right
-local data do, and the trust score shows where to collect them.
+local data do, and the label-budget results show that spreading new labels
+evenly beats putting them where labels already exist.
 
 ## Reproduce
 

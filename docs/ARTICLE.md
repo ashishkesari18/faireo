@@ -115,6 +115,16 @@ countries, 3 are among the 10 the score flags (trees; 4 for Presto).
 - 20 local labels for recalibration: absolute share error 9.4 → 7.6 points and
   low-income under-count −6.6 → −3.6.
 
+### 3.9 Label budget
+
+Retraining with 25/100/400 local labels raises a held-out country's AUC by
+0.010/0.022/0.045 on average (low-income at 400: +0.056; high-income: +0.023).
+Allocating 10,000 new labels: status quo 0.772 mean AUC, uniform 0.776,
+novelty-guided 0.771, oracle 0.781 (from 0.752; Presto linear probe, 30k
+training subsample). Even allocation beats the status quo, the simple
+label-free guide does not beat even allocation, and the oracle gap is the
+target for better targeting rules.
+
 ## 4. Limitations
 
 Point labels and mixed years; crowd labels may be noisier on smallholder

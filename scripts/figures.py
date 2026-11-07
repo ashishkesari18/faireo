@@ -113,7 +113,7 @@ def budget():
     b = pd.read_csv(f)
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.4), sharex=True)
     pol = {"status_quo": ("more labels where there already are many", "#a4a29c"),
-           "uniform": ("same number everywhere", ORANGE), "novelty": ("guided by trust score", BLUE),
+           "uniform": ("same number everywhere", ORANGE), "novelty": ("guided by novelty (label-free)", BLUE),
            "oracle_worst_first": ("oracle (upper bound)", AQUA)}
     for ax, m, t in [(axes[0], "low_income_auc", "Low-income countries, mean AUC"),
                      (axes[1], "worst10_auc", "Worst 10% of countries, mean AUC")]:
