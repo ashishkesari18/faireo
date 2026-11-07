@@ -1,0 +1,7 @@
+data/
+weights/*.pt
+!weights/presto.pt
+results/oof/
+__pycache__/
+.DS_Store
+*.tar.gz

@@ -1,0 +1,202 @@
+<title>FairEO Trust Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field instrument. Thesis line, one control row, the map as the main surface, a readout panel beside it, the ranked table below. */
+:root {
+  --bg: #f7f8f6; --panel: #ffffff; --ink: #11161c; --ink-2: #4b5560; --ink-3: #7b858f;
+  --rule: #dde2e4; --land: #e7eae8; --accent: #1c5cab; --focus: #2a78d6;
+  --s1: #cde2fb; --s2: #9ec5f4; --s3: #6da7ec; --s4: #3987e5; --s5: #256abf; --s6: #184f95; --s7: #0d366b;
+  --div-neg: #e34948; --div-mid: #f0efec; --div-pos: #2a78d6;
+  --sans: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111417; --panel: #181c20; --ink: #eef1f2; --ink-2: #b3bcc4; --ink-3: #87919a;
+  --rule: #2a3035; --land: #23282c; --accent: #86b6ef; --focus: #86b6ef;
+  --s1: #104281; --s2: #184f95; --s3: #1c5cab; --s4: #2a78d6; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+  --div-neg: #e66767; --div-mid: #383835; --div-pos: #3987e5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111417; --panel: #181c20; --ink: #eef1f2; --ink-2: #b3bcc4; --ink-3: #87919a;
+  --rule: #2a3035; --land: #23282c; --accent: #86b6ef; --focus: #86b6ef;
+  --s1: #104281; --s2: #184f95; --s3: #1c5cab; --s4: #2a78d6; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+  --div-neg: #e66767; --div-mid: #383835; --div-pos: #3987e5; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+.lede { color: var(--ink-2); max-width: 68ch; margin: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { font: 500 13px var(--sans); color: var(--ink-2); background: none; border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.ctl-label { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-right: 8px; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.mapbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 10px; min-width: 0; }
+svg#map { width: 100%; height: auto; display: block; }
+.country { stroke: var(--bg); stroke-width: .5; cursor: pointer; }
+.country.nodata { fill: var(--land); cursor: default; }
+.country:hover, .country.sel { stroke: var(--ink); stroke-width: 1.2; }
+.legend { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); padding: 6px 4px 2px; flex-wrap: wrap; }
+.ramp { height: 10px; width: 220px; max-width: 50vw; border-radius: 2px; }
+.swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; vertical-align: -2px; background: var(--land); border: 1px solid var(--rule); }
+aside { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+aside h2 { font-size: 20px; margin: 0; line-height: 1.2; }
+.pill { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--rule); color: var(--ink-2); justify-self: start; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; }
+dt { color: var(--ink-2); font-size: 13.5px; }
+dd { margin: 0; font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; text-align: right; }
+.verdict { font-size: 14px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border-left: 3px solid var(--accent); }
+.hint { color: var(--ink-3); font-size: 13px; }
+.tablebox { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+.tablebox h3 { margin: 0 0 8px; font-size: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 12px; border-bottom: 1px solid var(--rule); padding: 6px 8px; white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+td.num, th.num { text-align: right; font-family: var(--mono); }
+tr.row { cursor: pointer; } tr.row:hover td { background: var(--bg); }
+.tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12.5px; padding: 6px 9px; border-radius: 6px; font-family: var(--mono); z-index: 5; }
+.notes { color: var(--ink-3); font-size: 12.5px; max-width: 90ch; }
+.notes p { margin: 4px 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">FairEO-Bench · cropland AI reliability</div>
+    <h1>Where can you trust a satellite cropland model?</h1>
+    <p class="lede">Each country was held out of training, then scored against ground labels from NASA Harvest's CropHarvest. The trust score estimates accuracy using no labels from that country, so it also covers countries with too few labels to measure.</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label">Layer</span>
+      <span class="seg" role="group" aria-label="Map layer">
+        <button id="l-auc" aria-pressed="true" data-layer="auc">Measured accuracy</button>
+        <button id="l-exp" aria-pressed="false" data-layer="exp">Trust score</button>
+        <button id="l-share" aria-pressed="false" data-layer="share">Cropland count error</button>
+      </span></div>
+    <div><span class="ctl-label">Model</span>
+      <span class="seg" role="group" aria-label="Model">
+        <button id="m-trees" aria-pressed="true" data-model="trees">Gradient-boosted trees</button>
+        <button id="m-presto" aria-pressed="false" data-model="presto">Presto + trees</button>
+      </span></div>
+  </div>
+
+  <div class="stage">
+    <div class="mapbox">
+      <svg id="map" viewBox="0 0 960 470" role="img" aria-label="World map of model reliability by country"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+    <aside id="panel" aria-live="polite">
+      <div class="hint">Select a country on the map or in the table.</div>
+    </aside>
+  </div>
+
+  <div class="tablebox">
+    <h3 id="tbl-title">Least reliable countries</h3>
+    <table><thead><tr><th>Country</th><th>Income</th><th class="num">Measured AUC (95% CI)</th><th class="num">Trust score</th><th class="num">Crop found</th><th class="num">Cropland share, true vs model</th></tr></thead>
+    <tbody id="tbody"></tbody></table>
+  </div>
+
+  <div class="notes">
+    <p>AUC: how well the model ranks crop above non-crop (0.5 = chance, 1 = perfect). Measured only where a country has at least 100 labelled points with 20 of each class (66 countries). Trust score: a leave-one-country-out model of expected AUC built from the model's own confidence and the measured accuracy in the five countries whose landscapes look most similar (Presto embeddings). Cropland count error: model's crop share minus the true share among labelled points, in percentage points; negative means farmland is missed.</p>
+    <p>Data: CropHarvest v0.7 (Tseng et al., 2021), Sentinel-1/2, ERA5, SRTM. Borders: Natural Earth. Income groups: World Bank classification as recorded in Natural Earth.</p>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  const D = window.FAIREO, css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let layer = "auc", model = "trees", selected = null;
+  const svg = d3.select("#map"), proj = d3.geoEqualEarth().fitSize([960, 470], D.world), path = d3.geoPath(proj);
+  const g = svg.append("g");
+  const paths = g.selectAll("path").data(D.world.features).join("path").attr("d", path).attr("class", "country");
+  const tip = document.getElementById("tip");
+  const fmt = v => v == null ? "–" : v.toFixed(2);
+
+  function seqColor(v) {      // dark = worse (low AUC)
+    const stops = ["--s7", "--s6", "--s5", "--s4", "--s3", "--s2", "--s1"].map(css);
+    const t = Math.max(0, Math.min(1, (v - 0.5) / 0.45));
+    return d3.interpolateRgbBasis(stops)(t);
+  }
+  function divColor(v) {      // blue = over-count, red = under-count
+    const t = Math.max(-1, Math.min(1, v / 40));
+    return t < 0 ? d3.interpolateRgb(css("--div-mid"), css("--div-neg"))(-t) : d3.interpolateRgb(css("--div-mid"), css("--div-pos"))(t);
+  }
+  function val(r) {
+    if (!r) return null;
+    if (layer === "auc") return r.auc ?? null;
+    if (layer === "exp") return r.exp ?? null;
+    return r.share != null ? r.pshare - r.share : null;
+  }
+  function render() {
+    const R = D.runs[model];
+    paths.each(function (f) {
+      const v = val(R[f.properties.name]);
+      d3.select(this).classed("nodata", v == null).classed("sel", f.properties.name === selected)
+        .attr("fill", v == null ? null : layer === "share" ? divColor(v) : seqColor(v));
+    });
+    legend(); table(); panel();
+  }
+  function legend() {
+    const L = document.getElementById("legend");
+    if (layer === "share") {
+      L.innerHTML = `<span>misses farmland −40</span><span class="ramp" style="background:linear-gradient(90deg,${css("--div-neg")},${css("--div-mid")},${css("--div-pos")})"></span><span>+40 over-counts</span><span><span class="swatch"></span> no measurement</span>`;
+    } else {
+      const st = ["--s7", "--s6", "--s5", "--s4", "--s3", "--s2", "--s1"].map(css).join(",");
+      L.innerHTML = `<span>AUC 0.50 (chance)</span><span class="ramp" style="background:linear-gradient(90deg,${st})"></span><span>0.95</span><span><span class="swatch"></span> ${layer === "exp" ? "under 20 points" : "too few labels to measure"}</span>`;
+    }
+  }
+  function table() {
+    const R = D.runs[model];
+    const rows = Object.entries(R).filter(([, r]) => r.auc != null).sort((a, b) => a[1].auc - b[1].auc).slice(0, 12);
+    const inc = Object.fromEntries(D.world.features.map(f => [f.properties.name, f.properties.income]));
+    document.getElementById("tbody").innerHTML = rows.map(([c, r]) =>
+      `<tr class="row" data-c="${c}" tabindex="0"><td>${c}</td><td>${inc[c] || "–"}</td><td class="num">${fmt(r.auc)} (${fmt(r.lo)}–${fmt(r.hi)})</td><td class="num">${fmt(r.exp)}</td><td class="num">${Math.round(100 * r.rec)}%</td><td class="num">${r.share}% vs ${r.pshare}%</td></tr>`).join("");
+    document.querySelectorAll("tr.row").forEach(tr => {
+      tr.onclick = () => { selected = tr.dataset.c; render(); };
+      tr.onkeydown = e => { if (e.key === "Enter") { selected = tr.dataset.c; render(); } };
+    });
+  }
+  function panel() {
+    const P = document.getElementById("panel");
+    if (!selected) { P.innerHTML = `<div class="hint">Select a country on the map or in the table.</div>`; return; }
+    const r = D.runs[model][selected], f = D.world.features.find(x => x.properties.name === selected);
+    if (!r) { P.innerHTML = `<h2>${selected}</h2><div class="hint">Fewer than 20 labelled points, so no score.</div>`; return; }
+    const measured = r.auc != null;
+    const ref = measured ? r.auc : r.exp;
+    const verdict = ref >= 0.85 ? "Reliable: the model separates crop from non-crop well here." :
+                    ref >= 0.72 ? "Use with care: expect noticeable errors, and check a sample on the ground." :
+                    "Not reliable: local labels are needed before using this model here.";
+    P.innerHTML = `<h2>${selected}</h2><span class="pill">${f ? f.properties.income || "income n/a" : ""} income</span>
+      <dl>${measured ? `<dt>Measured AUC</dt><dd>${fmt(r.auc)}</dd><dt>95% interval</dt><dd>${fmt(r.lo)}–${fmt(r.hi)}</dd>` : ""}
+      <dt>Trust score (no local labels)</dt><dd>${fmt(r.exp)}</dd>
+      ${measured ? `<dt>Crop points found</dt><dd>${Math.round(100 * r.rec)}%</dd><dt>True cropland share</dt><dd>${r.share}%</dd><dt>Model's cropland share</dt><dd>${r.pshare}%</dd>` : ""}
+      <dt>Labelled points</dt><dd>${r.n.toLocaleString()}</dd></dl>
+      <div class="verdict">${verdict}</div>
+      ${measured ? "" : `<div class="hint">Too few labels to measure accuracy directly; the trust score is the estimate.</div>`}`;
+  }
+  paths.on("mousemove", (e, f) => {
+    const r = D.runs[model][f.properties.name], v = val(r);
+    tip.hidden = false; tip.style.left = (e.clientX + 12) + "px"; tip.style.top = (e.clientY + 12) + "px";
+    tip.textContent = `${f.properties.name}: ${v == null ? "no data" : layer === "share" ? (v > 0 ? "+" : "") + v.toFixed(1) + " pts" : "AUC " + v.toFixed(2)}`;
+  }).on("mouseleave", () => tip.hidden = true)
+    .on("click", (e, f) => { if (D.runs[model][f.properties.name]) { selected = f.properties.name; render(); } });
+  document.querySelectorAll("[data-layer]").forEach(b => b.onclick = () => {
+    layer = b.dataset.layer; document.querySelectorAll("[data-layer]").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); });
+  document.querySelectorAll("[data-model]").forEach(b => b.onclick = () => {
+    model = b.dataset.model; document.querySelectorAll("[data-model]").forEach(x => x.setAttribute("aria-pressed", x === b)); render(); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  selected = "Kenya";
+  render();
+})();
+</script>
