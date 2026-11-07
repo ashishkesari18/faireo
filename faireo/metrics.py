@@ -29,7 +29,7 @@ def point_metrics(y, p, thr=0.5):
                bal_acc=(rec + spec) / 2, f1=2 * prec * rec / max(prec + rec, 1e-9),
                brier=np.mean((p - y) ** 2), ece=ece(y, p))
     out["auc"] = roc_auc_score(y, p) if 0 < y.sum() < len(y) else np.nan
-    # cropland share error: what an area estimate would get wrong (percentage points)
+    # Legacy column name: sampled-point prevalence error, NOT a national-area estimate (pp)
     out["area_err_pp"] = 100 * (pred.mean() - y.mean())
     return out
 

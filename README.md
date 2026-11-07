@@ -1,19 +1,17 @@
-# FairEO-Bench: where satellite cropland AI fails, and what to do about it
+# FairEO-Bench: evaluating geographic transfer in cropland classification
 
-**Satellite AI maps cropland measurably worse in low-income countries.** The gap
-shows up in every model tested, from gradient-boosted trees to the NASA Harvest
-(Presto) and NASA–IBM (Prithvi-EO-2.0) foundation models. The error has a
-direction: in unseen low-income countries the models **miss farmland**, so
-cropland is under-counted where food-security estimates matter most.
+FairEO-Bench studies whether cropland classification models generalize to countries
+excluded from classifier training. Its published experiments report country-level
+performance differences across income-group categories on **labeled sample points**.
+These are observational benchmark results, not evidence that national income causes
+model failures or that national cropland area has been estimated accurately.
 
-FairEO-Bench measures that gap with whole countries held out of training. It
-tests whether the gap comes from the labels, the landscape or the model, and
-it ships three tools people can act on:
+This repository includes country-held-out model comparisons and exploratory tools:
 
-1. a **trust score** that predicts how reliable a model will be in a country
-   using *no* labels from that country,
-2. a **cropland-area error** report per country, and
-3. a **label-budget planner** that compares ways of spending new ground labels.
+1. A **trust score** associated with held-out benchmark-country AUC, proposed for
+   use without labels from a target country; independent validation is still needed.
+2. A **sampled-point crop-prevalence error** report, not a national area estimate.
+3. A **label-budget simulation** comparing alternative allocations of new labels.
 
 [**Interactive trust map**](https://ashishkesari18.github.io/faireo/docs/trustmap/) ·
 [Technical write-up](docs/ARTICLE.md) · [How to reproduce](#reproduce)
@@ -45,18 +43,18 @@ over countries.
 sees a 16×16 patch filled with that pixel over four seasons (no spatial
 texture). This is a pixel adaptation, reported separately for that reason.
 
-**1. The gap is about being unseen.** When each country's own points are also
+**1. The gap changes under country holdout.** When each country's own points are also
 in training (random split), the high/low gap for trees falls from 0.080 to
 0.039 and its interval includes zero. Low-income countries lose 0.084 AUC from
 being unseen; high-income ones lose 0.043.
 
-**2. It is not a labelling artefact.** Low-income countries get more of their
+**2. The gap persists in a common-label-source subset.** Low-income countries get more of their
 labels from local field campaigns. Scoring only the Geo-Wiki points, which
 were labelled with one protocol worldwide, makes the gap *larger*: 0.16 (0.11
 to 0.21) for trees and 0.17 (0.12 to 0.23) for Presto.
 
-**3. The errors are one-sided.** On unseen low-income countries the trees
-model finds 56% of crop points (high-income: 91%). Its cropland share comes
+**3. Sampled-point prediction prevalence differs by income group.** On unseen low-income countries the trees
+model finds 56% of crop points (high-income: 91%). Its predicted crop prevalence among the sampled points comes
 out 6.6 percentage points too low in low-income countries and 9.8 points too
 high in high-income ones (Presto: −8.3 and +6.3).
 
@@ -72,9 +70,9 @@ of crop points in low-income countries against 34% in high-income ones.
 
 ![World map](docs/figures/02_world_map_auc.png)
 
-## Why: what predicts failure
+## Observed associations with model performance
 
-Regressing per-country AUC (trees, 66 countries) on candidate causes:
+Regressing per-country AUC (trees, 66 countries) on candidate correlates:
 
 - **Crop share** is the strongest single predictor (Spearman ρ = +0.46):
   countries where cropland is a small, scattered part of the landscape are
@@ -109,7 +107,7 @@ with the 8 nearest neighbours, landscape neighbours reach ρ = 0.39 against 0.24
 
 ![Trust validation](docs/figures/04_trust_validation.png)
 
-### Cropland-area error per country
+### Sampled-point cropland-prevalence error per country
 
 `results/countries_*.csv` lists, per country, the true and predicted crop
 share, recall, calibration error and AUC with intervals. The
@@ -151,8 +149,8 @@ All evaluated on countries held out of training.
 | Recalibrate with 20 local labels | 20 per country | Mean absolute cropland-share error 9.4 → 7.6 points; low-income under-count −6.6 → −3.6 points |
 | Retrain with 25–400 local labels | Yes | See label-budget section |
 
-The negative results are part of the finding. Post-hoc fixes that use no labels
-do not close a gap that comes from missing data. Small amounts of the right
+The negative results are part of the finding. These experiments do not
+identify the causal mechanism behind the observed gap. Small amounts of the right
 local data do, and the label-budget results show that spreading new labels
 evenly beats putting them where labels already exist.
 
@@ -181,6 +179,21 @@ python tests/test_core.py  # fast checks, no data needed
 | Fixes | `scripts/recalibrate.py` |
 | Label budget | `scripts/label_budget.py` |
 | Figures and map | `scripts/figures.py`, `scripts/build_trustmap.py` |
+
+## Research process and validation
+
+- [Research log (draft and real-run template)](docs/RESEARCH_LOG.md)
+- [Methods and validity boundaries](docs/METHODS_AND_LIMITATIONS.md)
+- [Reproducible sensitivity-experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
+- [Authorship and AI-use disclosure draft](docs/AUTHORSHIP_AND_AI_USE.md)
+
+The legacy `area_err_pp` metric in exported CSVs is **sampled-point crop
+prevalence error**, computed as `100 * (pred_prevalence - prevalence)`. The
+name is retained for compatibility, but it is not an area-weighted estimate.
+Run `python tests/test_review_pack.py` to test the new analysis functions.
+Run `python scripts/verify_country_results.py` for CSV arithmetic consistency
+and `python scripts/sensitivity_gap.py` for a country-level sensitivity check.
+Neither check by itself reproduces training or proves a causal mechanism.
 
 ## Limitations
 
