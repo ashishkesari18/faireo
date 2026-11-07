@@ -1,0 +1,64 @@
+{
+  "study": "Exploratory country-level sensitivity analysis; not a causal estimate",
+  "filters": {
+    "min_country_n": 100,
+    "min_positive_and_negative": 20
+  },
+  "countries": 31,
+  "high_countries": 10,
+  "low_countries": 21,
+  "raw_gap_high_minus_low_auc": 0.07964449912035565,
+  "raw_country_bootstrap_95pct_ci": [
+    0.008929906635334349,
+    0.14770815519495983
+  ],
+  "prevalence_adjusted_linear_gap": 0.050631942558821794,
+  "adjusted_country_bootstrap_95pct_ci": [
+    -0.09822947725431012,
+    0.15472564145218548
+  ],
+  "mean_sample_prevalence_high": 0.7356135993576394,
+  "mean_sample_prevalence_low": 0.47194228353303136,
+  "prevalence_range_intersection_width": 0.22498735366382427,
+  "top_leave_one_country_out_influences": [
+    {
+      "country": "France",
+      "income": "High",
+      "gap_without": 0.09260516900901017,
+      "absolute_change": 0.012960669888654519
+    },
+    {
+      "country": "Mali",
+      "income": "Low",
+      "gap_without": 0.09093875612440494,
+      "absolute_change": 0.01129425700404929
+    },
+    {
+      "country": "Madagascar",
+      "income": "Low",
+      "gap_without": 0.06844914463317497,
+      "absolute_change": 0.011195354487180675
+    },
+    {
+      "country": "Canada",
+      "income": "High",
+      "gap_without": 0.06849453124069849,
+      "absolute_change": 0.011149967879657163
+    },
+    {
+      "country": "Poland",
+      "income": "High",
+      "gap_without": 0.06972770941738293,
+      "absolute_change": 0.009916789702972717
+    }
+  ],
+  "limitations": [
+    "Country AUC and sample prevalence come from the same observational benchmark.",
+    "Linear adjustment does not control all confounders or identify causal effects.",
+    "The model may extrapolate if groups have little prevalence overlap.",
+    "Bootstrap assumes sampled countries are exchangeable within income strata.",
+    "Country counts and filters should be compared with the original publication protocol."
+  ],
+  "bootstrap_seed": 2026,
+  "bootstrap_replicates": 2000
+}
