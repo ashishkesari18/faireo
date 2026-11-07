@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scripts.sensitivity_gap import prepare, raw_gap, prevalence_adjusted_gap, analyze
 from scripts.verify_country_results import verify
+from faireo.baselines import heldout_country_mean
 
 
 def fake_countries():
@@ -43,6 +44,15 @@ def test_country_table_invariants():
     assert verify(d) == []
     d.loc[0, "area_err_pp"] = 11
     assert verify(d)
+
+
+def test_heldout_country_mean_cannot_see_target():
+    observed = np.array([0.1, 0.2, 0.8])
+    baseline = heldout_country_mean(observed)
+    assert np.allclose(baseline, [0.5, 0.45, 0.15])
+    # Changing the target outcome cannot change its reference estimate.
+    changed = heldout_country_mean([0.99, 0.2, 0.8])
+    assert np.isclose(baseline[0], changed[0])
 
 
 def test_does_not_infer_unsupported_population_area():

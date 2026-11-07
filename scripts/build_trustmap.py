@@ -16,7 +16,13 @@ for key, run in RUNS.items():
     tr = pd.read_csv(RESULTS / f"trust_{run}.csv").set_index("country")
     d = {}
     for c in tr.index:
-        r = {"exp": round(float(tr.loc[c, "expected_auc"]), 3), "n": int(tr.loc[c, "n"])}
+        # Show leave-one-country-out scores for measured countries.
+        # Full-fit estimates are reserved for countries excluded from fitting.
+        prediction = (tr.loc[c, "expected_auc_loo"] if c in ct.index
+                      else tr.loc[c, "expected_auc"])
+        if pd.isna(prediction):
+            raise ValueError(f"Missing trust prediction for {c} in {run}")
+        r = {"exp": round(float(prediction), 3), "n": int(tr.loc[c, "n"])}
         if c in ct.index:
             x = ct.loc[c]
             r.update(auc=round(x.auc, 3), lo=round(x.auc_lo, 3), hi=round(x.auc_hi, 3),

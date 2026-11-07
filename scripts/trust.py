@@ -19,6 +19,7 @@ import numpy as np, pandas as pd
 from scipy.stats import spearmanr
 from sklearn.linear_model import LinearRegression
 from faireo.data import load, DATA, RESULTS
+from faireo.baselines import heldout_country_mean
 
 ap = argparse.ArgumentParser(); ap.add_argument("--run", default="lgbm_country_s0"); ap.add_argument("--k", type=int, default=5)
 a = ap.parse_args()
@@ -55,8 +56,10 @@ for c in labelled:
     loo.append(m.predict(row[feats])[0])
 true = ct.loc[labelled, "auc"].to_numpy(); loo = np.array(loo)
 rho, pval = spearmanr(loo, true)
-mae = np.abs(loo - true).mean(); base_mae = np.abs(true.mean() - true).mean()
-print(f"leave-one-country-out: Spearman rho={rho:.2f} (p={pval:.4f}); MAE={mae:.3f} vs {base_mae:.3f} for a constant guess")
+mae = np.abs(loo - true).mean()
+base_loo = heldout_country_mean(true)
+base_mae = np.abs(base_loo - true).mean()
+print(f"leave-one-country-out: Spearman rho={rho:.2f} (p={pval:.4f}); MAE={mae:.3f} vs {base_mae:.3f} for a held-out country-mean baseline")
 bottom = set(ct.loc[labelled, "auc"].nsmallest(10).index)
 flag = set(np.array(labelled)[np.argsort(loo)[:10]])
 print(f"of the 10 truly worst countries, {len(bottom & flag)} are among the 10 flagged as least trustworthy")
@@ -68,5 +71,6 @@ g["nbr_auc"] = [nbr_auc(c, labelled) for c in g.index]
 g["expected_auc"] = m.predict(g[feats])
 g["measured_auc"] = ct["auc"].reindex(g.index)
 g.loc[labelled, "expected_auc_loo"] = loo
+g.loc[labelled, "baseline_auc_loo"] = base_loo
 g.reset_index().to_csv(RESULTS / f"trust_{a.run}.csv", index=False)
 print(f"trust scores for {len(g)} countries ({len(labelled)} with measured AUC)")
